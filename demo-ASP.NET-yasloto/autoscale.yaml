@@ -1,0 +1,16 @@
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: aspwebsitenetcorehpa
+spec:
+  maxReplicas: 10
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: aspwebsitenetcore
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageValue : 32Mi

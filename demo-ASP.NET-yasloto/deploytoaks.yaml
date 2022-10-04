@@ -1,0 +1,40 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: aspwebsitenetcore
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5 
+  template:
+    metadata:
+      labels:
+        app: aspwebsitenetcore
+    spec:
+      containers:
+      - name: aspwebsitenetcore
+        image: containeregistrythomas.azurecr.io/linuxwebsite:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspwebsitenetcore
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: aspwebsitenetcore
