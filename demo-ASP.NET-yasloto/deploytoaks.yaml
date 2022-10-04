@@ -1,7 +1,7 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: aspwebsitenetcore
+  name: demo-aks-yas
 spec:
   replicas: 1
   strategy:
@@ -12,11 +12,11 @@ spec:
   template:
     metadata:
       labels:
-        app: aspwebsitenetcore
+        app: demo-aks-yas
     spec:
       containers:
-      - name: aspwebsitenetcore
-        image: containeregistrythomas.azurecr.io/linuxwebsite:latest
+      - name: demo-aks-yas
+        image: #{containerRegistry}#/#{imageRepository-administration}#:#{tag}#
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -31,10 +31,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: aspwebsitenetcore
+  name: demo-aks-yas
 spec:
   type: LoadBalancer
   ports:
   - port: 80
   selector:
-    app: aspwebsitenetcore
+    app: demo-aks-yas
