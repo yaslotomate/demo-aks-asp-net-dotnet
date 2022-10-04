@@ -1,0 +1,92 @@
+trigger:
+- master
+resources:
+- repo: self
+
+variables:
+
+ #container
+  dockerRegistryServiceConnection: 'acr-connexion'
+  dockerfilePath: '**/demo-ASP.NET-yasloto/demo-asp-net-kubernetes-azure/Dockerfile'
+  tag: '$(Build.BuildId)'
+  imagePullSecret: 'acr-connexion'
+  kubernetesServiceConnection: 'aks-connexion'
+
+  vmImagename: 'ubuntu-latest' 
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: '$(imageRepository)'
+        dockerfile: '$(dockerfilePath)'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        BuildContext: $(Build.SourcesDirectory)/apiweb1
+        tags: |
+          $(tag)
+    - upload: manifests
+      artifact: manifests
+         
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'aspnetrunrundevops.default'
+    strategy:
+      runOnce:
+        deploy:
+          
+
+          steps:
+          - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+            displayName: 'replace token in yml file'
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)'
+              targetFiles: |
+                **/*.yml
+              encoding: 'auto'
+              writeBOM: true
+              actionOnMissing: 'warn'
+              keepToken: false
+              tokenPrefix: '#{'
+              tokenSuffix: '}#'
+
+          - task: KubernetesManifest@0
+            displayName : Créer imagePullSecret
+            inputs:
+              action: 'createSecret'
+              kubernetesServiceConnection: '$(kubernetesServiceConnection)'
+              secretType: 'dockerRegistry'
+              secretName: '$(imagePullSecret)'
+              dockerRegistryEndpoint: '$(dockerRegistryServiceConnection)'
+
+
+          - task: KubernetesManifest@0
+            displayName: Déploiement vers le cluster Kubernetes
+            inputs :
+              action: 'deploy'
+              kubernetesServiceConnection: '$(kubernetesServiceConnection)'
+              manifests: |
+                $(Pipeline.workspace)/manifests/deployment.yaml
+               #$(Pipeline workspace)/manifests/service.yml
+               
+              imagePullSecrets: '$(imagePullSecret)'
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
