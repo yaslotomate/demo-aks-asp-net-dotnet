@@ -6,7 +6,7 @@ resources:
 variables:
 
  #container
-  dockerRegistryServiceConnection: 'acr-connexion'
+  dockerRegistryServiceConnection: 'aion'
   dockerfilePath: '**/demo-ASP.NET-yasloto/demo-asp-net-kubernetes-azure/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'acr-connexion'
